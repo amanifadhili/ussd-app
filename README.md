@@ -1,83 +1,81 @@
-# Rwanda USSD Application
+# USSD Application
 
-A USSD application for Rwanda that provides various services information in both English and Kinyarwanda languages.
+A USSD application with multiple language support, session management, and database integration.
 
 ## Features
 
-- Bilingual support (English and Kinyarwanda)
-- Multi-level menu navigation
-- Information about healthcare, education, and transportation services
-- Contact information
+- Multi-language support (English and Swahili)
+- Session management
+- Database integration
+- Course information
+- Exam schedules
+- Fee balance checking
 
-## Technical Stack
+## Setup
 
-- Node.js
-- Express.js
-- Africa's Talking USSD API
-- Hosted on Render
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Create a `.env` file with the required environment variables
+4. Run the application: `npm start`
 
-## Setup and Installation
+## Environment Variables
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/rwanda-ussd-app.git
-cd rwanda-ussd-app
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file with the following variables:
 ```
 PORT=3000
-AFRICAS_TALKING_API_KEY=your_api_key_here
-AFRICAS_TALKING_USERNAME=your_username_here
+AFRICAS_TALKING_API_KEY=your_api_key
+AFRICAS_TALKING_USERNAME=your_username
+DB_HOST=your_db_host
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+DB_PORT=your_db_port
 ```
 
-4. Start the application:
-```bash
-npm start
+## API Endpoints
+
+- POST `/ussd` - USSD endpoint
+
+## Database Schema
+
+- Sessions table: Stores session information
+- Transactions table: Records user transactions
+
+## Deployment
+
+This application can be deployed to Render using the provided `render.yaml` file.
 ```
 
-## Deployment to Render
+## 7. Integrating with Africa's Talking
 
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Use the following settings:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-4. Add the environment variables in the Render dashboard
+If you need to use Africa's Talking API for additional functionality (like sending SMS), you can create a utility file:
 
-## Africa's Talking Configuration
+```javascript:utils/africastalking.js
+const AfricasTalking = require('africastalking');
+require('dotenv').config();
 
-1. Log in to your Africa's Talking account
-2. Create a new USSD service
-3. Set the callback URL to your Render deployment URL + `/ussd` (e.g., `https://your-app.onrender.com/ussd`)
-4. Use the provided service code when testing your USSD application
+// Initialize Africa's Talking
+const africastalking = AfricasTalking({
+  apiKey: process.env.AFRICAS_TALKING_API_KEY,
+  username: process.env.AFRICAS_TALKING_USERNAME
+});
 
-## Testing
+// Get the SMS service
+const sms = africastalking.SMS;
 
-You can test the USSD application using Africa's Talking simulator or by dialing the USSD code on a real device once the service is live.
+// Function to send SMS
+const sendSMS = async (phoneNumber, message) => {
+  try {
+    const result = await sms.send({
+      to: phoneNumber,
+      message
+    });
+    return result;
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+    throw error;
+  }
+};
 
-## License
-
-MIT
-```
-
-## Deployment Instructions for Render
-
-1. First, create a Git repository and push your code:
-
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-```
-
-2. Create a repository on GitHub and push your code:
-
-```bash
-git remote add origin https://github.com/yourusername/rwanda-ussd-app.git
-git push -u origin main
+module.exports = {
+  sendSMS
+};

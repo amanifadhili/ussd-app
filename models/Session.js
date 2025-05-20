@@ -1,44 +1,47 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const pool = require('../config/database');
 
-const Session = sequelize.define('Session', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  sessionId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-  phoneNumber: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  level: {
-    type: DataTypes.STRING,
-    defaultValue: 'welcome'
-  },
-  language: {
-    type: DataTypes.ENUM('en', 'rw'),
-    defaultValue: 'en'
-  },
-  history: {
-    type: DataTypes.TEXT,
-    defaultValue: '[]',
-    get() {
-      const value = this.getDataValue('history');
-      return value ? JSON.parse(value) : [];
-    },
-    set(value) {
-      this.setDataValue('history', JSON.stringify(value));
-    }
-  },
-  lastActivity: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
+const createSession = async (sessionId, phoneNumber) => {
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO Sessions (sessionId, phoneNumber) VALUES (?, ?) ON DUPLICATE KEY UPDATE updatedAt = CURRENT_TIMESTAMP',
+      [sessionId, phoneNumber]
+    );
+    return result;
+  } catch (error) {
+    console.error('Error creating session:', error);
+    throw error;
   }
-});
+};
 
-module.exports = Session;
+const getSession = async (sessionId) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM Sessions WHERE sessionId = ?', [sessionId]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error getting session:', error);
+    throw error;
+  }
+};
+
+const updateSession = async (sessionId, data) => {
+  try {
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+    
+    const setClause = columns.map(col => `${col} = ?`).join(', ');
+    
+    const query = `UPDATE Sessions SET ${setClause} WHERE sessionId = ?`;
+    
+    const [result] = await pool.query(query, [...values, sessionId]);
+    return result;
+  } catch (error) {
+    console.error('Error updating session:', error);
+    throw error;
+  }
+};
+
+module.exports = {
+  createSession,
+  getSession,
+  updateSession
+};
